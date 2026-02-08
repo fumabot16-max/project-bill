@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-02-08T07:59:18.591Z",
+  "timestamp": "2026-02-08T08:34:21.031Z",
   "models": {
     "openai": "0.0000",
     "claude": "0.0000",
@@ -7,17 +7,17 @@
     "kimi": "0.0000",
     "deepseek": "0.0000",
     "grok": "0.0000",
-    "openai_bal": "9.18",
+    "openai_bal": "0.00",
     "openai_stats": {},
-    "claude_bal": "20.53",
+    "claude_bal": "0.00",
     "claude_stats": {},
     "gemini_bal": "POST",
     "gemini_stats": {},
-    "kimi_bal": "15.80",
+    "kimi_bal": "0.00",
     "kimi_stats": {},
-    "deepseek_bal": "8.46",
+    "deepseek_bal": "0.00",
     "deepseek_stats": {},
-    "grok_bal": "10.00",
+    "grok_bal": "0.00",
     "grok_stats": {}
   }
 }
