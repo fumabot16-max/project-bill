@@ -19,7 +19,8 @@
     "deepseek-v3": {"in": 0.14, "out": 0.28}
   },
   "grok": {
-    "grok-1": {"in": 5.0, "out": 15.0}
+    "grok-2-1212": {"in": 2.0, "out": 10.0},
+    "grok-2-mini-1212": {"in": 0.6, "out": 2.4}
   },
   "updated_at": "2026-02-08T10:10:00Z",
   "author": "Tiger Jung & Chloe"
