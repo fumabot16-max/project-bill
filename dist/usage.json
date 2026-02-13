@@ -1,23 +1,23 @@
 {
-  "timestamp": "2026-02-12T12:40:49.170Z",
+  "timestamp": "2026-02-13T01:13:51.981Z",
   "models": {
     "openai": "0.0000",
     "openai_bal": "9.01",
     "openai_stats": {},
-    "claude": "0.0321",
-    "claude_bal": "20.50",
+    "claude": "0.0963",
+    "claude_bal": "20.43",
     "claude_stats": {
       "CLAUDE OPUS 4 5 20251101": 149
     },
-    "gemini": "0.0474",
+    "gemini": "0.6587",
     "gemini_bal": "POST",
     "gemini_stats": {
-      "GEMINI 3 FLASH PREVIEW": 203832
+      "GEMINI 3 FLASH PREVIEW": 557914
     },
-    "kimi": "2.6108",
-    "kimi_bal": "1.40",
+    "kimi": "4.9839",
+    "kimi_bal": "21.11",
     "kimi_stats": {
-      "KIMI K2.5": 286656
+      "KIMI K2.5": 393629
     },
     "deepseek": "0.0000",
     "deepseek_bal": "7.32",
