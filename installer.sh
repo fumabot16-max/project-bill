@@ -9,6 +9,26 @@ echo "🤖 AI Bill Intelligence Installer"
 echo "=================================="
 echo ""
 
+# Check and install unzip if not found
+if ! command -v unzip &> /dev/null; then
+    echo "📦 Installing unzip..."
+    if command -v apt-get &> /dev/null; then
+        sudo apt-get update -qq && sudo apt-get install -y -qq unzip
+    elif command -v yum &> /dev/null; then
+        sudo yum install -y unzip
+    elif command -v dnf &> /dev/null; then
+        sudo dnf install -y unzip
+    else
+        echo "❌ Error: unzip not found and cannot install automatically"
+        echo "   Please install unzip manually:"
+        echo "   Ubuntu/Debian: sudo apt-get install unzip"
+        echo "   CentOS/RHEL: sudo yum install unzip"
+        exit 1
+    fi
+    echo "✅ unzip installed!"
+    echo ""
+fi
+
 # 1. Create directory
 SKILL_DIR="$HOME/.openclaw/skills/ai-bill-intelligence"
 mkdir -p "$SKILL_DIR"
