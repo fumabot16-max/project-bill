@@ -2,14 +2,8 @@
 
 # AI Bill Intelligence - One-line Installer
 # Usage: curl -fsSL [URL] | bash
-# Usage (auto): curl -fsSL [URL] | bash -s -- --auto
 
 set -e
-
-AUTO_MODE=false
-if [ "$1" == "--auto" ]; then
-    AUTO_MODE=true
-fi
 
 echo "🤖 AI Bill Intelligence Installer"
 echo "=================================="
@@ -64,10 +58,9 @@ rm -rf project-bill-master master.zip
 echo "📦 Installing dependencies..."
 npm install --silent
 
-# 5. Setup configuration
-if [ "$AUTO_MODE" == true ]; then
-    echo "⚙️  Auto mode: Creating default configuration..."
-    cat > vault.json << 'EOF'
+# 5. Setup configuration (Web-based - no terminal questions)
+echo "⚙️  Creating default configuration..."
+cat > vault.json << 'EOF'
 {
   "openai": 0,
   "claude": 0,
@@ -77,14 +70,7 @@ if [ "$AUTO_MODE" == true ]; then
   "gemini": 0
 }
 EOF
-    echo "✅ Default configuration created (all zeros)"
-    echo "   Edit vault.json later or use web dashboard to set balances"
-else
-    echo ""
-    echo "⚙️  Configuration"
-    echo "----------------"
-    node setup.js
-fi
+echo "✅ Default configuration created"
 
 # 6. Setup systemd services or macOS launcher
 echo ""
@@ -96,13 +82,10 @@ if command -v systemctl &> /dev/null; then
     sudo systemctl enable ai-bill ai-bill-collector
     sudo systemctl start ai-bill ai-bill-collector
     echo "✅ Services started!"
-    echo "   Start: sudo systemctl start ai-bill ai-bill-collector"
-    echo "   Stop: sudo systemctl stop ai-bill ai-bill-collector"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS
     chmod +x start-macos.sh
     echo "🍎 macOS detected!"
-    echo ""
     ./start-macos.sh
 else
     # Other systems
@@ -118,15 +101,10 @@ echo "✅ Installation Complete!"
 echo "=================================="
 echo ""
 echo "🌐 Dashboard: http://localhost:8003"
-
-if [ "$AUTO_MODE" == true ]; then
-    echo ""
-    echo "⚠️  Auto mode was used (all balances set to 0)"
-    echo "   To set your actual balances:"
-    echo "   1. Edit: ~/.openclaw/skills/ai-bill-intelligence/vault.json"
-    echo "   2. Or use the web dashboard to update balances"
-fi
-
+echo ""
+echo "⚠️  Initial Setup Required:"
+echo "   Visit http://localhost:8003/setup"
+echo "   to configure your API balances"
 echo ""
 echo "Check status:"
 if command -v systemctl &> /dev/null; then
