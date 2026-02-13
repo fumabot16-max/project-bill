@@ -21,11 +21,11 @@ async function setup() {
     console.log('Enter your current API balances (or 0 if not using):\n');
 
     const balances = {
-        openai: parseFloat(await question('OpenAI balance ($): ')) || 0,
-        claude: parseFloat(await question('Claude balance ($): ')) || 0,
-        kimi: parseFloat(await question('Kimi balance ($): ')) || 0,
-        deepseek: parseFloat(await question('DeepSeek balance ($): ')) || 0,
-        grok: parseFloat(await question('Grok balance ($): ')) || 0,
+        openai: parseFloat(await question('OpenAI balance ($) (예: 9.01): ')) || 0,
+        claude: parseFloat(await question('Claude balance ($) (예: 20.53): ')) || 0,
+        kimi: parseFloat(await question('Kimi balance ($) (예: 22.00): ')) || 0,
+        deepseek: parseFloat(await question('DeepSeek balance ($) (예: 7.32): ')) || 0,
+        grok: parseFloat(await question('Grok balance ($) (예: 10.00): ')) || 0,
         gemini: 0
     };
 
