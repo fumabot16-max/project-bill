@@ -2,8 +2,23 @@
 
 import fs from 'fs';
 import readline from 'readline';
+import { execSync } from 'child_process';
 
 const VAULT_PATH = './vault.json';
+
+// Check if node_modules exists, if not run npm install
+function checkDependencies() {
+    if (!fs.existsSync('./node_modules')) {
+        console.log('📦 Installing dependencies...');
+        try {
+            execSync('npm install', { stdio: 'inherit' });
+            console.log('✅ Dependencies installed!\n');
+        } catch (e) {
+            console.error('❌ Failed to install dependencies:', e.message);
+            process.exit(1);
+        }
+    }
+}
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -18,6 +33,10 @@ function question(prompt) {
 
 async function setup() {
     console.log('🤖 AI Bill Intelligence - Initial Setup\n');
+    
+    // Check and install dependencies
+    checkDependencies();
+    
     console.log('Enter your current API balances (or 0 if not using):\n');
 
     const balances = {
