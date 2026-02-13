@@ -2,8 +2,14 @@
 
 # AI Bill Intelligence - One-line Installer
 # Usage: curl -fsSL [URL] | bash
+# Usage (auto): curl -fsSL [URL] | bash -s -- --auto
 
 set -e
+
+AUTO_MODE=false
+if [ "$1" == "--auto" ]; then
+    AUTO_MODE=true
+fi
 
 echo "🤖 AI Bill Intelligence Installer"
 echo "=================================="
@@ -18,11 +24,13 @@ if ! command -v unzip &> /dev/null; then
         sudo yum install -y unzip
     elif command -v dnf &> /dev/null; then
         sudo dnf install -y unzip
+    elif command -v brew &> /dev/null; then
+        brew install unzip
     else
         echo "❌ Error: unzip not found and cannot install automatically"
         echo "   Please install unzip manually:"
         echo "   Ubuntu/Debian: sudo apt-get install unzip"
-        echo "   CentOS/RHEL: sudo yum install unzip"
+        echo "   macOS: brew install unzip"
         exit 1
     fi
     echo "✅ unzip installed!"
@@ -56,11 +64,27 @@ rm -rf project-bill-master master.zip
 echo "📦 Installing dependencies..."
 npm install --silent
 
-# 5. Run setup
-echo ""
-echo "⚙️  Configuration"
-echo "----------------"
-node setup.js
+# 5. Setup configuration
+if [ "$AUTO_MODE" == true ]; then
+    echo "⚙️  Auto mode: Creating default configuration..."
+    cat > vault.json << 'EOF'
+{
+  "openai": 0,
+  "claude": 0,
+  "kimi": 0,
+  "deepseek": 0,
+  "grok": 0,
+  "gemini": 0
+}
+EOF
+    echo "✅ Default configuration created (all zeros)"
+    echo "   Edit vault.json later or use web dashboard to set balances"
+else
+    echo ""
+    echo "⚙️  Configuration"
+    echo "----------------"
+    node setup.js
+fi
 
 # 6. Setup systemd services or macOS launcher
 echo ""
@@ -79,10 +103,6 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     chmod +x start-macos.sh
     echo "🍎 macOS detected!"
     echo ""
-    echo "To start, run:"
-    echo "   ~/.openclaw/skills/ai-bill-intelligence/start-macos.sh"
-    echo ""
-    # Auto-start for convenience
     ./start-macos.sh
 else
     # Other systems
@@ -98,10 +118,22 @@ echo "✅ Installation Complete!"
 echo "=================================="
 echo ""
 echo "🌐 Dashboard: http://localhost:8003"
+
+if [ "$AUTO_MODE" == true ]; then
+    echo ""
+    echo "⚠️  Auto mode was used (all balances set to 0)"
+    echo "   To set your actual balances:"
+    echo "   1. Edit: ~/.openclaw/skills/ai-bill-intelligence/vault.json"
+    echo "   2. Or use the web dashboard to update balances"
+fi
+
 echo ""
 echo "Check status:"
-echo "   systemctl status ai-bill ai-bill-collector"
-echo ""
+if command -v systemctl &> /dev/null; then
+    echo "   systemctl status ai-bill ai-bill-collector"
+else
+    echo "   ps aux | grep node"
+fi
 echo "View logs:"
-echo "   journalctl -u ai-bill-collector -f"
+echo "   tail -f ~/.openclaw/skills/ai-bill-intelligence/server.log"
 echo ""
