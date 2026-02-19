@@ -1,13 +1,13 @@
 import fs from 'fs';
 
-const USAGE_PATH = '/root/.openclaw/workspace/ai-bill/dist/usage.json';
-const PRICES_PATH = '/root/.openclaw/workspace/ai-bill/prices.json';
+const USAGE_PATH = '/root/.openclaw/workspace/bill_project/dist/usage.json';
+const PRICES_PATH = '/root/.openclaw/workspace/bill_project/prices.json';
 const SESSION_PATH = '/root/.openclaw/agents/main/sessions/sessions.json';
-const VAULT_PATH = '/root/.openclaw/workspace/ai-bill/vault.json';
+const VAULT_PATH = '/root/.openclaw/workspace/bill_project/vault.json';
 const WEB_LIVE_PATH = '/var/www/html/bill/usage_live.json';
 const WEB_MAIN_PATH = '/var/www/html/bill/usage.json';
-const DEBUG_LOG = '/root/.openclaw/workspace/tiger-bill-test/debug.log';
-const CUMULATIVE_PATH = '/root/.openclaw/workspace/ai-bill/cumulative_usage.json';
+const DEBUG_LOG = '/root/.openclaw/workspace/bill_project/debug.log';
+const CUMULATIVE_PATH = '/root/.openclaw/workspace/bill_project/cumulative_usage.json';
 
 // 누적 사용량 저장 (세션 압축에도 보존)
 function loadCumulative() {
