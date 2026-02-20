@@ -2,14 +2,14 @@
 
 Real-time AI spending dashboard for OpenClaw. Track 12+ AI providers including OpenAI, Claude, Gemini, DeepSeek, Kimi, Groq, xAI, MiniMax, Mistral, Qwen, GLM, and Llama.
 
-![AI Bill Dashboard](https://raw.githubusercontent.com/fumabot16-max/project-bill/master/public/screenshot.png)
+![AI Bill Dashboard](https://raw.githubusercontent.com/fumabot16-max/bill-project/master/public/screenshot.png)
 
 ## 🚀 Quick Install
 
 Run this command in your OpenClaw terminal:
 
 ```bash
-openclaw skill install https://github.com/fumabot16-max/project-bill
+openclaw skill install https://github.com/fumabot16-max/bill-project
 ```
 
 ## ✨ New in v1.2.2

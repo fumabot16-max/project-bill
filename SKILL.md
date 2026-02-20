@@ -4,7 +4,7 @@ Real-time billing dashboard for OpenClaw. Accurate token-based cost tracking acr
 
 ## 🚀 Installation
 ```bash
-openclaw skill install https://github.com/fumabot16-max/project-bill
+openclaw skill install https://github.com/fumabot16-max/bill-project
 ```
 
 ## 🛠 Usage
