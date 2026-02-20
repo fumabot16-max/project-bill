@@ -26,3 +26,4 @@ This skill manages the following data files inside the `app/` directory:
 - `app/debug.log`: Collector activity logs.
 
 Built by Tiger Jung & Chloe (@fumarole16-afk).
+<!-- Sync trigger: Fri Feb 20 22:36:10 KST 2026 -->
