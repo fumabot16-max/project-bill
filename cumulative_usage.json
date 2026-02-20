@@ -1,10 +1,10 @@
 {
   "openai": 0,
-  "claude": 180.7600800000001,
-  "gemini": 2.9922480749999765,
-  "kimi": 14.54150189999998,
-  "deepseek": 0.024110520000000003,
-  "grok": 0,
-  "lastReset": "2026-02-12T21:37:00Z",
-  "note": "Claude balance synced to $20.53, Kimi to $22"
+  "claude": 0,
+  "gemini": 0,
+  "kimi": 0,
+  "deepseek": 0,
+  "groq": 0,
+  "lastReset": "2026-02-20T21:20:00Z",
+  "note": "Tiger requested fresh start with updated balances"
 }

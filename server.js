@@ -17,7 +17,7 @@ function needsSetup() {
     if (!fs.existsSync(vaultPath)) return true;
     
     const vault = JSON.parse(fs.readFileSync(vaultPath, 'utf8'));
-    const balances = ['openai', 'claude', 'kimi', 'deepseek', 'grok'];
+    const balances = ['openai', 'claude', 'kimi', 'deepseek', 'groq'];
     return balances.every(key => !vault[key] || vault[key] === 0);
   } catch (e) {
     return true;
@@ -37,18 +37,34 @@ app.get('/setup', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'setup.html'));
 });
 
+// API: Get current vault data
+app.get('/api/vault', (req, res) => {
+  try {
+    const vaultPath = path.join(__dirname, 'vault.json');
+    if (!fs.existsSync(vaultPath)) return res.json({});
+    const vault = JSON.parse(fs.readFileSync(vaultPath, 'utf8'));
+    res.json(vault);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // API: Save setup
 app.post('/api/setup', (req, res) => {
   try {
     const vaultPath = path.join(__dirname, 'vault.json');
-    const data = {
-      openai: parseFloat(req.body.openai) || 0,
-      claude: parseFloat(req.body.claude) || 0,
-      kimi: parseFloat(req.body.kimi) || 0,
-      deepseek: parseFloat(req.body.deepseek) || 0,
-      grok: parseFloat(req.body.grok) || 0,
-      gemini: 0
-    };
+    const fields = ['openai', 'claude', 'kimi', 'deepseek', 'groq', 'xai', 'minimax', 'mistral', 'qwen', 'glm', 'llama', 'gemini'];
+    const data = {};
+    fields.forEach(f => {
+      if (req.body[f] && typeof req.body[f] === 'object') {
+        data[f] = {
+          balance: parseFloat(req.body[f].balance) || 0,
+          mode: req.body[f].mode || 'prepaid'
+        };
+      } else {
+        data[f] = { balance: parseFloat(req.body[f]) || 0, mode: 'prepaid' };
+      }
+    });
     
     fs.writeFileSync(vaultPath, JSON.stringify(data, null, 2));
     res.json({ status: 'success', message: 'Configuration saved' });

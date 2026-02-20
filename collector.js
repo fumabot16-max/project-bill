@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 
 const USAGE_PATH = '/root/.openclaw/workspace/bill_project/dist/usage.json';
 const PRICES_PATH = '/root/.openclaw/workspace/bill_project/prices.json';
@@ -10,49 +11,43 @@ const DEBUG_LOG = '/root/.openclaw/workspace/bill_project/debug.log';
 const CUMULATIVE_PATH = '/root/.openclaw/workspace/bill_project/cumulative_usage.json';
 const OPENCLAW_CONFIG = '/root/.openclaw/openclaw.json';
 
-// 누적 사용량 저장 (세션 압축에도 보존)
-function loadCumulative() {
+const BRANDS = ['openai', 'claude', 'gemini', 'deepseek', 'kimi', 'groq', 'xai', 'minimax', 'mistral', 'qwen', 'glm', 'llama'];
+
+function loadArchived() {
     if (fs.existsSync(CUMULATIVE_PATH)) {
         try {
             return JSON.parse(fs.readFileSync(CUMULATIVE_PATH, 'utf8'));
         } catch (e) {
-            console.error('Failed to load cumulative:', e.message);
+            console.error('Failed to load archived costs:', e.message);
         }
     }
-    return { openai: 0, claude: 0, gemini: 0, kimi: 0, deepseek: 0, grok: 0, lastReset: new Date().toISOString() };
+    const initial = { lastReset: new Date().toISOString() };
+    BRANDS.forEach(b => initial[b] = 0);
+    return initial;
 }
 
-function saveCumulative(data) {
+function saveArchived(data) {
     try {
         fs.writeFileSync(CUMULATIVE_PATH, JSON.stringify(data, null, 2));
     } catch (e) {
-        console.error('Failed to save cumulative:', e.message);
+        console.error('Failed to save archived costs:', e.message);
     }
 }
 
-// Runtime 정보 추출 (openclaw.json 에서 현재 사용 중인 모델 확인)
 function getRuntimeInfo() {
     try {
         if (!fs.existsSync(OPENCLAW_CONFIG)) return null;
-        
         const config = JSON.parse(fs.readFileSync(OPENCLAW_CONFIG, 'utf8'));
         const defaults = config.models?.defaults || {};
         const provider = defaults.provider || 'minimax-portal';
         const model = defaults.model || 'MiniMax-M2.5';
-        
-        return {
-            provider: provider,
-            model: model,
-            fullModel: `${provider}/${model}`
-        };
+        return { provider, model, fullModel: `${provider}/${model}` };
     } catch (e) {
-        console.error('Failed to load runtime info:', e.message);
         return null;
     }
 }
 
-// 세션별 토큰 추적 (중복 방지)
-const processedSessions = new Map();
+let lastScanSessions = new Map();
 
 async function calculateUsage() {
     try {
@@ -61,122 +56,105 @@ async function calculateUsage() {
         let sessionsRaw;
         try {
             sessionsRaw = fs.readFileSync(SESSION_PATH, 'utf8');
-            if (!sessionsRaw || sessionsRaw.trim() === '') throw new Error("Empty file");
+            if (!sessionsRaw || sessionsRaw.trim() === '') return;
         } catch (e) {
-            console.log(`[${new Date().toLocaleTimeString()}] Session file busy, retrying...`);
             return;
         }
 
         const sessions = JSON.parse(sessionsRaw);
         const prices = JSON.parse(fs.readFileSync(PRICES_PATH, 'utf8'));
+        const vault = fs.existsSync(VAULT_PATH) ? JSON.parse(fs.readFileSync(VAULT_PATH, 'utf8')) : {};
+        const archived = loadArchived();
         
-        let vault = { openai: 0, claude: 0, grok: 0, kimi: 0, deepseek: 0, gemini: 0 };
-        let isFirstSetup = false;
-        if (fs.existsSync(VAULT_PATH)) {
-            vault = JSON.parse(fs.readFileSync(VAULT_PATH, 'utf8'));
-            // Check if all balances are 0 (first time setup)
-            const allZero = Object.values(vault).every(v => v === 0 || v === undefined);
-            if (allZero) {
-                isFirstSetup = true;
-                console.log(`[${new Date().toLocaleTimeString()}] ⚠️  First time setup detected!`);
-                console.log(`[${new Date().toLocaleTimeString()}] Please run: node setup.js`);
-            }
-        } else {
-            isFirstSetup = true;
-            console.log(`[${new Date().toLocaleTimeString()}] ⚠️  vault.json not found!`);
-            console.log(`[${new Date().toLocaleTimeString()}] Please run: node setup.js`);
-        }
-        
-        // 누적 사용량 로드
-        const cumulative = loadCumulative();
-        
-        // 현재 세션 사용량 계산
-        const currentUsage = { openai: 0, claude: 0, gemini: 0, kimi: 0, deepseek: 0, grok: 0 };
-        const stats = { openai: {}, claude: {}, gemini: {}, kimi: {}, deepseek: {}, grok: {} };
+        const currentUsage = {};
+        const stats = {};
+        BRANDS.forEach(b => {
+            currentUsage[b] = 0;
+            stats[b] = {};
+        });
+
+        const activeSessionKeys = new Set();
         let debugInfo = [];
-        let newTokensFound = false;
 
         Object.entries(sessions).forEach(([sessionKey, s]) => {
-            // model 확인 - 우선순위: modelOverride > providerOverride > model
-            let modelFull = '';
-            if (s.modelOverride) modelFull = s.modelOverride.toLowerCase();
-            else if (s.providerOverride) modelFull = s.providerOverride.toLowerCase();
-            else if (s.model) modelFull = s.model.toLowerCase();
-            
+            let modelFull = (s.modelOverride || s.providerOverride || s.model || '').toLowerCase();
             const inTokens = s.inputTokens || 0;
             const outTokens = s.outputTokens || 0;
-            const sessionId = s.sessionId || sessionKey;
             
-            // 중복 체크: 세션 ID + 토큰 합으로 고유 식별
-            const tokenSum = inTokens + outTokens;
-            const sessionSignature = `${sessionId}:${tokenSum}`;
+            if (inTokens === 0 && outTokens === 0) return;
             
-            if (inTokens > 0 || outTokens > 0) {
-                debugInfo.push(`${sessionKey.split(':').pop()}: ${inTokens}/${outTokens} -> ${modelFull || 'NO_MODEL'}`);
-                
-                // 새로운 토큰만 누적에 추가
-                if (!processedSessions.has(sessionSignature)) {
-                    processedSessions.set(sessionSignature, { in: inTokens, out: outTokens, time: Date.now() });
-                    newTokensFound = true;
-                }
-            }
-            
+            activeSessionKeys.add(sessionKey);
+
             let brand = '';
             if (modelFull.includes('claude')) brand = 'claude';
             else if (modelFull.includes('gemini')) brand = 'gemini';
-            else if (modelFull.includes('gpt')) brand = 'openai';
+            else if (modelFull.includes('gpt') || modelFull.includes('openai')) brand = 'openai';
             else if (modelFull.includes('kimi')) brand = 'kimi';
             else if (modelFull.includes('deepseek')) brand = 'deepseek';
-            else if (modelFull.includes('grok')) brand = 'grok';
+            else if (modelFull.includes('groq')) brand = 'groq';
+            else if (modelFull.includes('grok') || modelFull.includes('xai')) brand = 'xai';
+            else if (modelFull.includes('minimax')) brand = 'minimax';
+            else if (modelFull.includes('mistral')) brand = 'mistral';
+            else if (modelFull.includes('qwen')) brand = 'qwen';
+            else if (modelFull.includes('glm')) brand = 'glm';
+            else if (modelFull.includes('llama')) brand = 'llama';
 
-            if (brand && prices[brand] && (inTokens > 0 || outTokens > 0)) {
-                let priceInfo = null;
-                const modelKey = Object.keys(prices[brand]).find(k => modelFull.includes(k));
-                priceInfo = modelKey ? prices[brand][modelKey] : prices[brand][Object.keys(prices[brand])[0]];
+            if (brand && prices[brand]) {
+                const modelKey = Object.keys(prices[brand]).find(k => modelFull.includes(k.toLowerCase()));
+                const priceInfo = modelKey ? prices[brand][modelKey] : prices[brand][Object.keys(prices[brand])[0]];
 
                 if (priceInfo) {
                     const cost = (inTokens * (priceInfo.in / 1000000)) + (outTokens * (priceInfo.out / 1000000));
                     currentUsage[brand] += cost;
-
+                    
                     const verLabel = modelFull.split('/').pop().replace(/-/g, ' ').toUpperCase();
                     stats[brand][verLabel] = (stats[brand][verLabel] || 0) + (inTokens + outTokens);
                     
-                    // 새로운 토큰을 누적에 추가
-                    const sessionRecord = processedSessions.get(sessionSignature);
-                    if (sessionRecord && !sessionRecord.addedToCumulative) {
-                        const tokenCost = (inTokens * (priceInfo.in / 1000000)) + (outTokens * (priceInfo.out / 1000000));
-                        cumulative[brand] += tokenCost;
-                        sessionRecord.addedToCumulative = true;
-                    }
+                    lastScanSessions.set(sessionKey, { brand, cost, time: Date.now() });
+                    debugInfo.push(`${sessionKey.split(':').pop()}: ${inTokens}/${outTokens} -> ${modelFull}`);
                 }
             }
         });
 
-        // 누적 사용량 저장 (세션 압축에도 보존)
-        if (newTokensFound) {
-            saveCumulative(cumulative);
+        let archivedChanged = false;
+        for (const [key, data] of lastScanSessions.entries()) {
+            if (!activeSessionKeys.has(key)) {
+                archived[data.brand] = (archived[data.brand] || 0) + data.cost;
+                lastScanSessions.delete(key);
+                archivedChanged = true;
+                console.log(`[${new Date().toLocaleTimeString()}] Archiving session ${key.split(':').pop()}: $${data.cost.toFixed(4)}`);
+            }
         }
 
-        // 디버그 로그 기록
-        fs.writeFileSync(DEBUG_LOG, debugInfo.join('\n'));
+        if (archivedChanged) {
+            saveArchived(archived);
+        }
 
-        // Runtime 정보 추가
         const runtimeInfo = getRuntimeInfo();
-        
-        // 최종 사용량 = 누적 + 현재
         const usageData = { 
             timestamp: new Date().toISOString(), 
             runtime: runtimeInfo,
             models: {}
         };
 
-        Object.keys(cumulative).forEach(k => {
-            if (k === 'lastReset' || k === 'note') return;
-            const cumul = parseFloat(cumulative[k]) || 0;
-            const curr = parseFloat(currentUsage[k]) || 0;
-            const totalCost = cumul + curr;
+        BRANDS.forEach(k => {
+            const totalCost = (archived[k] || 0) + currentUsage[k];
             usageData.models[k] = totalCost.toFixed(4);
-            usageData.models[k + '_bal'] = (k === 'gemini') ? "POST" : (parseFloat(vault[k] || 0) - totalCost).toFixed(2);
+            
+            const vaultItem = vault[k] || { balance: 0, mode: 'prepaid' };
+            const balBase = parseFloat(vaultItem.balance || 0);
+            const mode = vaultItem.mode || 'prepaid';
+
+            if (mode === 'postpaid') {
+                usageData.models[k + '_bal'] = "POST";
+            } else if (mode === 'subscribe') {
+                usageData.models[k + '_bal'] = "SUB";
+            } else if (mode === 'unused') {
+                usageData.models[k + '_bal'] = "OFF";
+            } else {
+                usageData.models[k + '_bal'] = (balBase - totalCost).toFixed(2);
+            }
+            
             usageData.models[k + '_stats'] = stats[k];
         });
 
@@ -184,23 +162,13 @@ async function calculateUsage() {
         fs.writeFileSync(USAGE_PATH, jsonStr);
         fs.writeFileSync(WEB_LIVE_PATH, jsonStr);
         fs.writeFileSync(WEB_MAIN_PATH, jsonStr);
+        fs.writeFileSync(DEBUG_LOG, debugInfo.join('\n'));
         
-        console.log(`[${new Date().toLocaleTimeString()}] Sync OK | Cumulative + Current Mode`);
+        console.log(`[${new Date().toLocaleTimeString()}] Sync OK | Total Brands: ${BRANDS.length}`);
     } catch (e) { 
         console.error(`[${new Date().toLocaleTimeString()}] Engine Error:`, e.message); 
     }
 }
 
-// 초기 실행
 calculateUsage();
 setInterval(calculateUsage, 27000);
-
-// 1시간마다 메모리 정리 (오래된 세션 기록 삭제)
-setInterval(() => {
-    const oneHourAgo = Date.now() - 3600000;
-    for (const [key, value] of processedSessions.entries()) {
-        if (value.time < oneHourAgo) {
-            processedSessions.delete(key);
-        }
-    }
-}, 3600000);

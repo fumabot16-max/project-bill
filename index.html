@@ -101,7 +101,7 @@
         function setTheme(m) { if(m==='light') document.body.classList.add('light'); else document.body.classList.remove('light'); toggleSettings(); }
         async function refreshData(btn) { btn.style.transform='rotate(360deg)'; try { await fetch('/usage_live.json?t='+Date.now()); setTimeout(async()=>{ await fetchAndUpdate(); btn.style.transform='rotate(0deg)'; }, 1000); } catch(e){console.error(e);} }
         
-        const config = [{id:'openai',name:'OpenAI',color:'#10b981'},{id:'claude',name:'Claude',color:'#fb923c'},{id:'gemini',name:'Gemini',color:'#3b82f6'},{id:'kimi',name:'Kimi',color:'#a855f7'},{id:'deepseek',name:'DeepSeek',color:'#06b6d4'},{id:'grok',name:'Grok',color:'#ffffff'}];
+        const config = [{id:'openai',name:'OpenAI',color:'#10b981'},{id:'claude',name:'Claude',color:'#fb923c'},{id:'gemini',name:'Gemini',color:'#3b82f6'},{id:'kimi',name:'Kimi',color:'#a855f7'},{id:'deepseek',name:'DeepSeek',color:'#06b6d4'},{id:'groq',name:'Groq',color:'#ffffff'}];
         async function fetchAndUpdate() {
             try {
                 const res = await fetch('/usage.json?t=' + Date.now());
