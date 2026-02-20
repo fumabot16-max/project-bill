@@ -18,11 +18,11 @@ The skill operates via a background collector. As an agent, you can help the use
 - **Modes**: `prepaid`, `postpaid`, `subscribe`, `unused` (off).
 
 ## 📂 Managed Files (Declarations)
-This skill manages the following data files:
-- `vault.json`: User-defined balances and payment modes.
-- `prices.json`: AI model pricing data.
-- `cumulative_usage.json`: Archived costs from expired sessions.
-- `dist/usage.json`: Real-time aggregated usage data for the dashboard.
-- `debug.log`: Collector activity logs.
+This skill manages the following data files inside the `app/` directory:
+- `app/vault.json`: User-defined balances and payment modes.
+- `app/prices.json`: AI model pricing data.
+- `app/cumulative_usage.json`: Archived costs from expired sessions.
+- `app/dist/usage.json`: Real-time aggregated usage data for the dashboard.
+- `app/debug.log`: Collector activity logs.
 
 Built by Tiger Jung & Chloe (@fumarole16-afk).
