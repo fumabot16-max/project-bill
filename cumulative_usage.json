@@ -1,9 +1,9 @@
 {
   "openai": 0,
-  "claude": 1.4960819999999995,
-  "gemini": 2.834313824999985,
+  "claude": 180.7579410000001,
+  "gemini": 2.9764546499999773,
   "kimi": 14.54150189999998,
-  "deepseek": 0,
+  "deepseek": 0.024110520000000003,
   "grok": 0,
   "lastReset": "2026-02-12T21:37:00Z",
   "note": "Claude balance synced to $20.53, Kimi to $22"

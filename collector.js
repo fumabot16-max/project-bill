@@ -8,6 +8,7 @@ const WEB_LIVE_PATH = '/var/www/html/bill/usage_live.json';
 const WEB_MAIN_PATH = '/var/www/html/bill/usage.json';
 const DEBUG_LOG = '/root/.openclaw/workspace/bill_project/debug.log';
 const CUMULATIVE_PATH = '/root/.openclaw/workspace/bill_project/cumulative_usage.json';
+const OPENCLAW_CONFIG = '/root/.openclaw/openclaw.json';
 
 // 누적 사용량 저장 (세션 압축에도 보존)
 function loadCumulative() {
@@ -26,6 +27,27 @@ function saveCumulative(data) {
         fs.writeFileSync(CUMULATIVE_PATH, JSON.stringify(data, null, 2));
     } catch (e) {
         console.error('Failed to save cumulative:', e.message);
+    }
+}
+
+// Runtime 정보 추출 (openclaw.json 에서 현재 사용 중인 모델 확인)
+function getRuntimeInfo() {
+    try {
+        if (!fs.existsSync(OPENCLAW_CONFIG)) return null;
+        
+        const config = JSON.parse(fs.readFileSync(OPENCLAW_CONFIG, 'utf8'));
+        const defaults = config.models?.defaults || {};
+        const provider = defaults.provider || 'minimax-portal';
+        const model = defaults.model || 'MiniMax-M2.5';
+        
+        return {
+            provider: provider,
+            model: model,
+            fullModel: `${provider}/${model}`
+        };
+    } catch (e) {
+        console.error('Failed to load runtime info:', e.message);
+        return null;
     }
 }
 
@@ -138,9 +160,13 @@ async function calculateUsage() {
         // 디버그 로그 기록
         fs.writeFileSync(DEBUG_LOG, debugInfo.join('\n'));
 
+        // Runtime 정보 추가
+        const runtimeInfo = getRuntimeInfo();
+        
         // 최종 사용량 = 누적 + 현재
         const usageData = { 
             timestamp: new Date().toISOString(), 
+            runtime: runtimeInfo,
             models: {}
         };
 

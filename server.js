@@ -60,7 +60,7 @@ app.post('/api/setup', (req, res) => {
 // API endpoint for usage data
 app.get('/api/usage', (req, res) => {
   try {
-    const usageData = require('./dist/usage.json');
+    const usageData = JSON.parse(fs.readFileSync(path.join(__dirname, 'dist', 'usage.json'), 'utf8'));
     res.json({
       status: 'success',
       timestamp: new Date().toISOString(),
